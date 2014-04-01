@@ -19,8 +19,43 @@ process.on('uncaughtException', function(err) {
 
 seneca.use('options','options.mine.js')
 
+//seneca.use('redis-store',{
+//  host: 'localhost',
+//  port: 6379,
+//  db: 1
+//})
 
-seneca.use('mem-store',{web:{dump:true}})
+
+seneca.use('redis-store',{
+  map: {
+    'shard1/-/-': '*'
+  },
+  host: 'localhost',
+  port: 6379,
+  db: 1
+})
+
+seneca.use('redis-store',{
+  map: {
+    'shard2/-/-': '*'
+  },
+  host: 'localhost',
+  port: 6379,
+  db: 2
+})
+
+seneca.use('shard-store',{
+  shards: {
+    1: {
+      zone: 'shard1',
+      append: true
+    },
+    2: {
+      zone: 'shard2',
+      append: true
+    }
+  }
+})
 
 seneca.use('user',{confirm:true})
 seneca.use('mail')
@@ -40,9 +75,14 @@ seneca.ready(function(err){
   var u = seneca.pin({role:'user',cmd:'*'})
   var projectpin = seneca.pin({role:'project',cmd:'*'})
 
+  console.log('adding u1')
   u.register({nick:'u1',name:'nu1',email:'u1@example.com',password:'u1',active:true}, function(err,out){
-    projectpin.save( {account:out.user.accounts[0],name:'p1'} )
-    seneca.act('role:settings, cmd:save, kind:user, settings:{a:"aaa"}, ref:"'+out.user.id+'"')
+    console.log('aaaa')
+    console.log(out)
+    if (out.ok) {
+      projectpin.save( {account:out.user.accounts[0],name:'p1'} )
+      seneca.act('role:settings, cmd:save, kind:user, settings:{a:"aaa"}, ref:"'+out.user.id+'"')
+    }
   })
   u.register({nick:'u2',name:'nu2',email:'u2@example.com',password:'u2',active:true})
   u.register({nick:'a1',name:'na1',email:'a1@example.com',password:'a1',active:true,admin:true})
@@ -67,7 +107,7 @@ seneca.ready(function(err){
 
   app.use( function( req, res, next ){
     if( 0 == req.url.indexOf('/reset') ||
-        0 == req.url.indexOf('/confirm') ) 
+        0 == req.url.indexOf('/confirm') )
     {
       req.url = '/'
     }
@@ -76,7 +116,7 @@ seneca.ready(function(err){
   })
 
 
-  app.use( express.static(__dirname+options.main.public) )  
+  app.use( express.static(__dirname+options.main.public) )
 
   app.listen( options.main.port )
 
