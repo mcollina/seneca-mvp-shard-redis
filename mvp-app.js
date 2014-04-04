@@ -22,7 +22,7 @@ seneca.use('options','options.mine.js')
 //seneca.use('redis-store',{
 //  host: 'localhost',
 //  port: 6379,
-//  db: 1
+//  db: 3
 //})
 
 
@@ -75,10 +75,7 @@ seneca.ready(function(err){
   var u = seneca.pin({role:'user',cmd:'*'})
   var projectpin = seneca.pin({role:'project',cmd:'*'})
 
-  console.log('adding u1')
   u.register({nick:'u1',name:'nu1',email:'u1@example.com',password:'u1',active:true}, function(err,out){
-    console.log('aaaa')
-    console.log(out)
     if (out.ok) {
       projectpin.save( {account:out.user.accounts[0],name:'p1'} )
       seneca.act('role:settings, cmd:save, kind:user, settings:{a:"aaa"}, ref:"'+out.user.id+'"')
